@@ -55,6 +55,7 @@ class OutlineOTFCompiler(object):
         self.fontBoundingBox = tuple([_roundInt(i) for i in self.makeFontBoundingBox()])
         # make a reusable character mapping
         self.unicodeToGlyphNameMapping = self.makeUnicodeToGlyphNameMapping()
+        self.unicodeSupplToGlyphNameMapping = self.makeUnicodeSupplToGlyphNameMapping()
 
     # -----------
     # Main Method
@@ -109,6 +110,22 @@ class OutlineOTFCompiler(object):
             unicodes = glyph.unicodes
             for uni in unicodes:
                 mapping[uni] = glyphName
+        return mapping
+
+    def makeUnicodeSupplToGlyphNameMapping(self):
+        """
+        Make a ``unicode supplementary plane : glyph name`` mapping for the font.
+
+        **This should not be called externally.** Subclasses
+        may override this method to handle the mapping creation
+        in a different way if desired.
+        """
+        mapping = {}
+        for glyphName, glyph in self.allGlyphs.items():
+            unicodes = glyph.unicodes
+            for uni in unicodes:
+                if uni > 65535:
+                    mapping[uni] = glyphName
         return mapping
 
     def makeMissingRequiredGlyphs(self):
@@ -248,22 +265,44 @@ class OutlineOTFCompiler(object):
         table creation in a different way if desired.
         """
         from fontTools.ttLib.tables._c_m_a_p import cmap_format_4
+
+        mapping = self.unicodeToGlyphNameMapping
+        if self.unicodeSupplToGlyphNameMapping is not {}:
+            mapping -= self.unicodeSupplToGlyphNameMapping
         # mac
         cmap4_0_3 = cmap_format_4(4)
         cmap4_0_3.platformID = 0
         cmap4_0_3.platEncID = 3
         cmap4_0_3.language = 0
-        cmap4_0_3.cmap = dict(self.unicodeToGlyphNameMapping)
+        cmap4_0_3.cmap = dict(mapping)
         # windows
         cmap4_3_1 = cmap_format_4(4)
         cmap4_3_1.platformID = 3
         cmap4_3_1.platEncID = 1
         cmap4_3_1.language = 0
-        cmap4_3_1.cmap = dict(self.unicodeToGlyphNameMapping)
+        cmap4_3_1.cmap = dict(mapping)
         # store
         self.otf["cmap"] = cmap = newTable("cmap")
         cmap.tableVersion = 0
         cmap.tables = [cmap4_0_3, cmap4_3_1]
+        # If we have glyphs outside Unicode BMP, we must set another
+        # subtable that can hold longer codepoints for them.
+        if self.unicodeSupplToGlyphNameMapping is not {}:
+            from fontTools.ttLib.tables._c_m_a_p import cmap_format_12
+            # mac
+            cmap12_0_3 = cmap_format_12(12)
+            cmap12_0_3.platformID = 0
+            cmap12_0_3.platEncID = 3
+            cmap12_0_3.language = 0
+            cmap12_0_3.cmap = dict(self.unicodeToGlyphNameMapping[1])
+            # windows
+            cmap12_3_1 = cmap_format_12(12)
+            cmap12_3_1.platformID = 3
+            cmap12_3_1.platEncID = 1
+            cmap12_3_1.language = 0
+            cmap12_3_1.cmap = dict(self.unicodeToGlyphNameMapping[1])
+
+            cmap.tables = [cmap4_0_3, cmap4_3_1, cmap12_0_3, cmap12_3_1]
 
     def setupTable_OS2(self):
         """
@@ -375,7 +414,7 @@ class OutlineOTFCompiler(object):
         elif styleMapStyleName == "bold italic":
             selection += [0, 5]
         os2.fsSelection = intListToNum(selection, 0, 16)
-        # characetr indexes
+        # character indexes
         unicodes = [i for i in self.unicodeToGlyphNameMapping.keys() if i is not None]
         if unicodes:
             minIndex = min(unicodes)
