@@ -1,10 +1,10 @@
 import os
 import shutil
 import re
-from fontInfoData import getAttrWithFallback, intListToNum, normalizeStringForPostscript
-from outlineOTF import OutlineOTFCompiler
-from featureTableWriter import FeatureTableWriter, winStr, macStr
-from kernFeatureWriter import KernFeatureWriter
+from .fontInfoData import getAttrWithFallback, intListToNum, normalizeStringForPostscript
+from .outlineOTF import OutlineOTFCompiler
+from .featureTableWriter import FeatureTableWriter, winStr, macStr
+from .kernFeatureWriter import KernFeatureWriter
 try:
     sorted
 except NameError:
@@ -131,7 +131,7 @@ class MakeOTFPartsCompiler(object):
             l = "m=1,%s" % macStr(macCompatible)
             lines.append(l)
         text = "\n".join(lines) + "\n"
-        f = open(path, "wb")
+        f = open(path, "w")
         f.write(text)
         f.close()
 
@@ -157,7 +157,7 @@ class MakeOTFPartsCompiler(object):
                 line = "%s %s" % (glyphName, glyphName)
             lines.append(line)
         text = "\n".join(lines) + "\n"
-        f = open(path, "wb")
+        f = open(path, "w")
         f.write(text)
         f.close()
 
@@ -205,7 +205,7 @@ class MakeOTFPartsCompiler(object):
             lines.append("IsOS/2OBLIQUE false")
         # write the file
         if lines:
-            f = open(path, "wb")
+            f = open(path, "w")
             f.write("\n".join(lines))
             f.close()
 
@@ -257,7 +257,7 @@ class MakeOTFPartsCompiler(object):
             features.append(text)
         features = "\n\n".join(features)
         # write the result
-        f = open(path, "wb")
+        f = open(path, "w")
         f.write(features)
         f.close()
 
@@ -627,7 +627,7 @@ def extractFeaturesAndTables(text, scannedFiles=[]):
             continue
         # replace the strings
         finalText = text
-        for temp, original in stringReplacements.items():
+        for temp, original in list(stringReplacements.items()):
             if temp in finalText:
                 del stringReplacements[temp]
                 finalText = finalText.replace(temp, original, 1)

@@ -57,7 +57,7 @@ class KernFeatureWriter(object):
         # write the classes
         groups = dict(self.leftGroups)
         groups.update(self.rightGroups)
-        for groupName, glyphList in groups.items():
+        for groupName, glyphList in list(groups.items()):
             if not glyphList:
                 del groups[groupName]
         classes = self.getClassDefinitionsForGroups(groups)
@@ -91,7 +91,7 @@ class KernFeatureWriter(object):
             feature.append(line)
         feature.append("} kern;")
         # done
-        return u"\n".join(feature)
+        return "\n".join(feature)
 
     # -------------
     # Initial Setup
@@ -106,7 +106,7 @@ class KernFeatureWriter(object):
         leftReferencedGroups = set()
         rightReferencedGroups = set()
         groups = self.font.groups
-        for left, right in self.font.kerning.keys():
+        for left, right in list(self.font.kerning.keys()):
             if left.startswith(self.groupNamePrefix) and left in groups:
                 leftReferencedGroups.add(left)
             if right.startswith(self.groupNamePrefix) and right in groups:
@@ -135,11 +135,11 @@ class KernFeatureWriter(object):
         """
         # gather all glyphs that are already referenced
         leftReferencedGlyphs = []
-        for glyphList in self.leftGroups.values():
+        for glyphList in list(self.leftGroups.values()):
             leftReferencedGlyphs += glyphList
         leftReferencedGlyphs = set(leftReferencedGlyphs)
         rightReferencedGlyphs = []
-        for glyphList in self.rightGroups.values():
+        for glyphList in list(self.rightGroups.values()):
             rightReferencedGlyphs += glyphList
         rightReferencedGlyphs = set(rightReferencedGlyphs)
         # find unreferenced groups
@@ -169,7 +169,7 @@ class KernFeatureWriter(object):
         You should not call this method directly.
         """
         pairs = {}
-        for (left, right), value in self.font.kerning.items():
+        for (left, right), value in list(self.font.kerning.items()):
             # skip missing glyphs
             if left not in self.font.groups and left not in self.font:
                 continue
@@ -199,14 +199,14 @@ class KernFeatureWriter(object):
         """
         flatLeftGroups = {}
         flatRightGroups = {}
-        for groupName, glyphList in self.leftGroups.items():
+        for groupName, glyphList in list(self.leftGroups.items()):
             for glyphName in glyphList:
                 # user has glyph in more than one group.
                 # this is not allowed.
                 if glyphName in flatLeftGroups:
                     continue
                 flatLeftGroups[glyphName] = groupName
-        for groupName, glyphList in self.rightGroups.items():
+        for groupName, glyphList in list(self.rightGroups.items()):
             for glyphName in glyphList:
                 # user has glyph in more than one group.
                 # this is not allowed.
@@ -214,11 +214,11 @@ class KernFeatureWriter(object):
                     continue
                 flatRightGroups[glyphName] = groupName
         flatLeftUnreferencedGroups = {}
-        for groupName, glyphList in self.leftUnreferencedGroups.items():
+        for groupName, glyphList in list(self.leftUnreferencedGroups.items()):
             for glyphName in glyphList:
                 flatLeftUnreferencedGroups[glyphName] = groupName
         flatRightUnreferencedGroups = {}
-        for groupName, glyphList in self.rightUnreferencedGroups.items():
+        for groupName, glyphList in list(self.rightUnreferencedGroups.items()):
             for glyphName in glyphList:
                 flatRightUnreferencedGroups[glyphName] = groupName
         return flatLeftGroups, flatRightGroups, flatLeftUnreferencedGroups, flatRightUnreferencedGroups
@@ -227,7 +227,7 @@ class KernFeatureWriter(object):
     # Pair Support
     # ------------
 
-    def isHigherLevelPairPossible(self, (left, right)):
+    def isHigherLevelPairPossible(self, xxx_todo_changeme):
         """
         Determine if there is a higher level pair possible.
         This doesn't indicate that the pair exists, it simply
@@ -235,6 +235,7 @@ class KernFeatureWriter(object):
         can exist.
         You should not call this method directly.
         """
+        (left, right) = xxx_todo_changeme
         leftInUnreferenced = False
         rightInUnreferenced = False
         if left.startswith("@"):
@@ -301,7 +302,7 @@ class KernFeatureWriter(object):
         groupGlyph = {}
         groupGlyphDecomposed = {}
         groupGroup = {}
-        for (left, right), value in pairs.items():
+        for (left, right), value in list(pairs.items()):
             if left.startswith("@") and right.startswith("@"):
                 groupGroup[left, right] = value
             elif left.startswith("@"):
@@ -313,7 +314,7 @@ class KernFeatureWriter(object):
         ## handle decomposition
         allGlyphGlyph = set(glyphGlyph.keys())
         # glyph to group
-        for (left, right), value in glyphGroup.items():
+        for (left, right), value in list(glyphGroup.items()):
             if self.isHigherLevelPairPossible((left, right)):
                 finalRight = tuple([r for r in sorted(self.rightGroups[right]) if (left, r) not in allGlyphGlyph])
                 for r in finalRight:
@@ -321,7 +322,7 @@ class KernFeatureWriter(object):
                 glyphGroupDecomposed[left, finalRight] = value
                 del glyphGroup[left, right]
         # group to glyph
-        for (left, right), value in groupGlyph.items():
+        for (left, right), value in list(groupGlyph.items()):
             if self.isHigherLevelPairPossible((left, right)):
                 finalLeft = tuple([l for l in sorted(self.leftGroups[left]) if (l, right) not in glyphGlyph and (l, right) not in allGlyphGlyph])
                 for l in finalLeft:
