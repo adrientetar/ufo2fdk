@@ -40,7 +40,7 @@ def haveFDK():
     """
     import subprocess
     env = _makeEnviron()
-    for tool in ["makeotf", "checkoutlines", "autohint"]:
+    for tool in ["makeotf", "checkOutlines", "autohint"]:
         if not shutil.which(tool):
             return False
     # now test to make sure that makeotf is new enough
